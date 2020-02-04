@@ -44,7 +44,7 @@ from os.path import expanduser
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 #settings
-base_url = '[base_url]'
+base_url = 'https://filesender.cesnet.cz/rest.php'
 default_transfer_days_valid = 10
 username = None
 email = None
