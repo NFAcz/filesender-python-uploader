@@ -47,6 +47,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 base_url = '[base_url]'
 default_transfer_days_valid = 10
 username = None
+email = None
 apikey = None
 homepath = expanduser("~")
 
@@ -57,6 +58,7 @@ if 'system' in config:
   default_transfer_days_valid = int(config['system'].get('default_transfer_days_valid', 10))
 if 'user' in config:
   username = config['user'].get('username')
+  email = config['user'].get('email')
   apikey = config['user'].get('apikey')
 
 
@@ -78,6 +80,10 @@ if username is None:
   requiredNamed.add_argument("-u", "--username", required=True)
 else:
   parser.add_argument("-u", "--username")
+if email is None:
+  requiredNamed.add_argument("-e", "--email", required=True)
+else:
+  parser.add_argument("-e", "--email")
   
 if apikey is None:
   requiredNamed.add_argument("-a", "--apikey", required=True)
@@ -91,6 +97,9 @@ progress = args.progress
 
 if args.username is not None:
   username = args.username
+
+if args.email is not None:
+  email = args.email
   
 if args.apikey is not None:
   apikey = args.apikey
@@ -103,6 +112,7 @@ upload_chunk_size = response.json()['upload_chunk_size']
 if debug:
   print('base_url          : '+base_url)
   print('username          : '+username)
+  print('email             : '+email)
   print('apikey            : '+apikey)
   print('upload_chunk_size : '+str(upload_chunk_size)+' bytes')
   print('recipients        : '+args.recipients)
@@ -270,7 +280,7 @@ for f in args.files:
 troptions = {'get_a_link':0}
 
 
-transfer = postTransfer( username,
+transfer = postTransfer( email,
                          filesTransfer,
                          args.recipients,
                          subject=args.subject,
