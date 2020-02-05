@@ -40,6 +40,8 @@ import os
 import json
 import configparser
 from os.path import expanduser
+import queue
+import threading
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -289,27 +291,53 @@ transfer = postTransfer( email,
                          options=troptions)['created']
 #print(transfer)
 
+def worker():
+  while True:
+    item = q.get()
+    if not item:
+      break
+    f = item[0]
+    offset = item[1]
+    with open(path, mode='rb', buffering=0) as fin:
+      fin.seek(offset)
+      data = fin.read(upload_chunk_size)
+      putChunk(f, data, offset)
+    if progress:
+      print('Uploaded: {0} {1}-{2} {3}/{4}'.format(path, offset, offset+upload_chunk_size, int(offset / upload_chunk_size), int(size / upload_chunk_size)))
+    q.task_done()
+
 try:
   for f in transfer['files']:
     path = files[f['name']+':'+str(f['size'])]['path']
     size = files[f['name']+':'+str(f['size'])]['size']
     #putChunks
+    q = queue.Queue()
+    threads = []
+    num_worker_threads = 30
+    for i in range(num_worker_threads):
+      t = threading.Thread(target=worker)
+      t.start()
+      threads.append(t)
+
     if debug:
       print('putChunks: '+path)
-    with open(path, mode='rb', buffering=0) as fin:
-      for offset in range(0,size+1,upload_chunk_size):
-        if progress:
-          print('Uploading: '+path+' '+str(offset)+'-'+str(min(offset+upload_chunk_size, size))+' '+str(round(offset/size*100))+'%')
-        data = fin.read(upload_chunk_size)
-        #print(data)
-        putChunk(f, data, offset)
+
+    for offset in range(0,size,upload_chunk_size):
+      q.put((f, offset))
+
+    # block until all tasks are done
+    q.join()
+
+    # stop workers
+    for i in range(num_worker_threads):
+      q.put(None)
+    for t in threads:
+      t.join()
 
     #fileComplete
     if debug:
       print('fileComplete: '+path)
     fileComplete(f)
-    if progress:
-      print('Uploading: '+path+' '+str(size)+' 100%')
 
 
   #transferComplete
