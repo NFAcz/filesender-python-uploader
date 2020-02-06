@@ -17,7 +17,7 @@
 #     names of its contributors may be used to endorse or promote products
 #     derived from this software without specific prior written permission.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 'AS IS'
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
 # DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
@@ -45,77 +45,30 @@ import threading
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-#settings
-base_url = 'https://filesender.cesnet.cz/rest.php'
-default_transfer_days_valid = 30
-username = None
-email = None
-apikey = None
-homepath = expanduser("~")
-
-config = configparser.ConfigParser()
-config.read(homepath + '/.filesender/filesender.py.ini')
-if 'system' in config:
-  base_url = config['system'].get('base_url', '[base_url]')
-  default_transfer_days_valid = int(config['system'].get('default_transfer_days_valid', 10))
-if 'user' in config:
-  username = config['user'].get('username')
-  email = config['user'].get('email')
-  apikey = config['user'].get('apikey')
-
-
-
-  
-
-
-#argv
 parser = argparse.ArgumentParser()
-parser.add_argument("files", help="path to file(s) to send", nargs='+')
-parser.add_argument("-v", "--verbose", action="store_true")
-parser.add_argument("-p", "--progress", action="store_true")
-parser.add_argument("-s", "--subject")
-parser.add_argument("-m", "--message")
-requiredNamed = parser.add_argument_group('required named arguments')
-
-# if we have found these in the config file they become optional arguments
-if username is None:
-  requiredNamed.add_argument("-u", "--username", required=True)
-else:
-  parser.add_argument("-u", "--username")
-if email is None:
-  requiredNamed.add_argument("-e", "--email", required=True)
-else:
-  parser.add_argument("-e", "--email")
-  
-if apikey is None:
-  requiredNamed.add_argument("-a", "--apikey", required=True)
-else:
-  parser.add_argument("-a", "--apikey")
-  
-requiredNamed.add_argument("-r", "--recipients", required=True)
+parser.add_argument('files', help='path to file(s) to send', nargs='+')
+parser.add_argument('-v', '--verbose', action='store_true')
+parser.add_argument('-p', '--progress', action='store_true')
+parser.add_argument('-u', '--username', default=os.getenv('FILESENDER_USER_NAME', 'user'))
+parser.add_argument('-e', '--email', default=os.getenv('FILESENDER_USER_EMAIL', 'user@example.org'))
+parser.add_argument('-r', '--recipients', default=os.getenv('FILESENDER_RECIPIENTS', 'user@example.org'))
+parser.add_argument('-a', '--apikey', default=os.getenv('FILESENDER_USER_APIKEY', 'TESTAPIKEY'))
+parser.add_argument('-b', '--baseurl', default=os.getenv('FILESENDER_BASEURL', 'localhost'))
+parser.add_argument('-d', '--days', type=int, default=os.getenv('FILESENDER_EXPIRE_DAYS', 10))
+parser.add_argument('-s', '--subject')
+parser.add_argument('-m', '--message')
 args = parser.parse_args()
-debug = args.verbose
-progress = args.progress
-
-if args.username is not None:
-  username = args.username
-
-if args.email is not None:
-  email = args.email
-  
-if args.apikey is not None:
-  apikey = args.apikey
 
   
 #configs
-response = requests.get(base_url+'/info', verify=False)
+response = requests.get(args.baseurl+'/info', verify=False)
 upload_chunk_size = response.json()['upload_chunk_size']
 
-if debug:
-  print('base_url          : '+base_url)
-  print('username          : '+username)
-  print('email             : '+email)
-  print('apikey            : '+apikey)
+if args.verbose:
+  print('baseurl          : '+args.baseurl)
+  print('username          : '+args.username)
+  print('email             : '+args.email)
+  print('apikey            : '+args.apikey)
   print('upload_chunk_size : '+str(upload_chunk_size)+' bytes')
   print('recipients        : '+args.recipients)
   print('files             : '+','.join(args.files))
@@ -134,10 +87,10 @@ def flatten(d, parent_key=''):
   return items
 
 def call(method, path, data, content=None, rawContent=None, options={}):
-  data['remote_user'] = username
+  data['remote_user'] = args.username
   data['timestamp'] = str(round(time.time()))
   flatdata=flatten(data)
-  signed = bytes(method+'&'+base_url.replace('https://','',1).replace('http://','',1)+path+'?'+('&'.join(flatten(data))), 'ascii')
+  signed = bytes(method+'&'+args.baseurl.replace('https://','',1).replace('http://','',1)+path+'?'+('&'.join(flatten(data))), 'ascii')
 
   content_type = options['Content-Type'] if 'Content-Type' in options else 'application/json'
 
@@ -150,40 +103,35 @@ def call(method, path, data, content=None, rawContent=None, options={}):
     signed += bytes('&', 'ascii')
     signed += inputcontent
 
-  #print(signed)
   bkey = bytearray()
-  bkey.extend(map(ord, apikey))
+  bkey.extend(map(ord, args.apikey))
   data['signature'] = hmac.new(bkey, signed, hashlib.sha1).hexdigest()
 
-  url = base_url+path+'?'+('&'.join(flatten(data)))
+  url = args.baseurl+path+'?'+('&'.join(flatten(data)))
   headers = {
-    "Accept": "application/json",
-    "Content-Type": content_type
+    'Accept': 'application/json',
+    'Content-Type': content_type
   }
   response = None
-  if method == "get":
+  if method == 'get':
     response = requests.get(url, verify=False, headers=headers)
-  elif method == "post":
+  elif method == 'post':
     response = requests.post(url, data=inputcontent, verify=False, headers=headers)
-  elif method == "put":
+  elif method == 'put':
     response = requests.put(url, data=inputcontent, verify=False, headers=headers)
-  elif method == "delete":
+  elif method == 'delete':
     response = requests.delete(url, verify=False, headers=headers)
 
   if response is None:
     raise Exception('Client error')
 
   code = response.status_code
-  #print(url)
-  #print(inputcontent)
-  #print(code)
-  #print(response.text)
 
   if code!=200:
     if method!='post' or code!=201:
       raise Exception('Http error '+str(code)+' '+response.text)
 
-  if response.text=="":
+  if response.text=='':
     raise Exception('Http error '+str(code)+' Empty response')
 
   if method!='post':
@@ -197,7 +145,7 @@ def call(method, path, data, content=None, rawContent=None, options={}):
 def postTransfer(user_id, files, recipients, subject=None, message=None, expires=None, options=[]):
 
   if expires is None:
-    expires = round(time.time()) + (default_transfer_days_valid*24*3600)
+    expires = round(time.time()) + (args.days*24*3600)
 
   to = [x.strip() for x in recipients.split(',')]
   
@@ -262,7 +210,7 @@ def deleteTransfer(transfer):
 ##########################################################################
 
 #postTransfer
-if debug:
+if args.verbose:
   print('postTransfer')
 
 files = {}
@@ -282,14 +230,13 @@ for f in args.files:
 troptions = {'get_a_link':0}
 
 
-transfer = postTransfer( email,
+transfer = postTransfer( args.email,
                          filesTransfer,
                          args.recipients,
                          subject=args.subject,
                          message=args.message,
                          expires=None,
                          options=troptions)['created']
-#print(transfer)
 
 def worker():
   while True:
@@ -302,7 +249,7 @@ def worker():
       fin.seek(offset)
       data = fin.read(upload_chunk_size)
       putChunk(f, data, offset)
-    if progress:
+    if args.progress:
       print('Uploaded: {0}, part {3}/{4}'.format(path, offset, offset+upload_chunk_size, int(offset / upload_chunk_size), int(size / upload_chunk_size)))
     q.task_done()
 
@@ -319,7 +266,7 @@ try:
       t.start()
       threads.append(t)
 
-    if debug:
+    if args.verbose:
       print('putChunks: '+path)
 
     for offset in range(0,size,upload_chunk_size):
@@ -335,16 +282,16 @@ try:
       t.join()
 
     #fileComplete
-    if debug:
+    if args.verbose:
       print('fileComplete: '+path)
     fileComplete(f)
 
 
   #transferComplete
-  if debug:
+  if args.verbose:
     print('transferComplete')
   transferComplete(transfer)
-  if progress:
+  if args.progress:
     print('Upload Complete')
 
 except Exception as inst:
@@ -353,7 +300,7 @@ except Exception as inst:
   print(inst)
 
   #deleteTransfer
-  if debug:
+  if args.verbose:
     print('deleteTransfer')
   deleteTransfer(transfer)
 
