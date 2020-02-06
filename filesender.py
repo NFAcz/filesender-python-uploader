@@ -303,7 +303,7 @@ def worker():
       data = fin.read(upload_chunk_size)
       putChunk(f, data, offset)
     if progress:
-      print('Uploaded: {0} {1}-{2} {3}/{4}'.format(path, offset, offset+upload_chunk_size, int(offset / upload_chunk_size), int(size / upload_chunk_size)))
+      print('Uploaded: {0}, part {3}/{4}'.format(path, offset, offset+upload_chunk_size, int(offset / upload_chunk_size), int(size / upload_chunk_size)))
     q.task_done()
 
 try:
