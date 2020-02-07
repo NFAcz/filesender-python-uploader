@@ -256,7 +256,7 @@ def worker():
       cur_percent_done = round(cur_part / num_parts * 100)
       if cur_percent_done > percent_done:
         print('{0}, {1}%'.format(path, cur_percent_done))
-    percent_done = cur_percent
+    percent_done = cur_percent_done
     q.task_done()
 
 try:
