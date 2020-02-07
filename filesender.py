@@ -249,8 +249,14 @@ def worker():
       fin.seek(offset)
       data = fin.read(upload_chunk_size)
       putChunk(f, data, offset)
+    global percent_done
     if args.progress:
-      print('Uploaded: {0}, part {3}/{4}'.format(path, offset, offset+upload_chunk_size, int(offset / upload_chunk_size), int(size / upload_chunk_size)))
+      num_parts = size / upload_chunk_size
+      cur_part = offset / upload_chunk_size
+      cur_percent_done = round(cur_part / num_parts * 100)
+      if cur_percent_done > percent_done:
+        print('{0}, {1}%'.format(path, percent))
+    percent = cur_percent
     q.task_done()
 
 try:
@@ -261,6 +267,8 @@ try:
     q = queue.Queue()
     threads = []
     num_worker_threads = 30
+    global percent_done
+    percent_done = 0
     for i in range(num_worker_threads):
       t = threading.Thread(target=worker)
       t.start()
