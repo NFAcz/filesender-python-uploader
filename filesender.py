@@ -248,13 +248,17 @@ def worker():
     with open(path, mode='rb', buffering=0) as fin:
       fin.seek(offset)
       data = fin.read(upload_chunk_size)
-      putChunk(f, data, offset)
+      uploaded = False
+      while not uploaded:
+        try:
+          putChunk(f, data, offset)
+          if args.verbose:
+            print('Uploading {0} part {1}/{2}'.format(path, int(cur_part), int(num_parts)))
+          uploaded = True
+        except:
+          pass
     global percent_done
-    if args.progress:
-      num_parts = size / upload_chunk_size
-      cur_part = offset / upload_chunk_size
-      cur_percent_done = round(cur_part / num_parts * 100)
-      if cur_percent_done > percent_done:
+    if args.progress and cur_percent_done > percent_done:
         print('{0}, {1}%'.format(path, cur_percent_done))
     percent_done = cur_percent_done
     q.task_done()
