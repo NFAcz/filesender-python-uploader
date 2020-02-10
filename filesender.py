@@ -245,6 +245,9 @@ def worker():
       break
     f = item[0]
     offset = item[1]
+    num_parts = size / upload_chunk_size
+    cur_part = offset / upload_chunk_size
+    cur_percent_done = round(cur_part / num_parts * 100)
     with open(path, mode='rb', buffering=0) as fin:
       fin.seek(offset)
       data = fin.read(upload_chunk_size)
