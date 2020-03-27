@@ -42,7 +42,7 @@ Parameters specified using runtime configuration:
 ```
 $ ./filesender.py -p -v -u sender -e sender@example.com -a abcdef \
 -r recipient@example.com -b https://filesender.example.com/rest.php \
-/home/sender/testfile.zip
+-s "Example subject" -m "Example message" /home/sender/testfile.zip
 
 baseurl          : https://filesender.example.com/rest.php
 username          : sender
@@ -50,6 +50,8 @@ email             : sender@example.com
 apikey            : abcdef
 upload_chunk_size : 5242880 bytes
 recipients        : recipient@example.com
+subject           : Example subject
+message           : Example message
 files             : /home/sender/testfile.zip
 postTransfer
 putChunks: /home/sender/testfile.zip
@@ -73,6 +75,8 @@ export FILESENDER_USER_EMAIL="sender@example.com"
 export FILESENDER_USER_APIKEY="abcdef"
 export FILESENDER_RECIPIENTS="recipient@example.com"
 export FILESENDER_EXPIRE_DAYS="29"
+export FILESENDER_SUBJECT="Example subject"
+export FILESENDER_MESSAGE="Example message"
 
 python filesender.py -p $1
 ````
