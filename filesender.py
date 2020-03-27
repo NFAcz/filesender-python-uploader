@@ -55,7 +55,7 @@ parser.add_argument('-r', '--recipients', default=os.getenv('FILESENDER_RECIPIEN
 parser.add_argument('-a', '--apikey', default=os.getenv('FILESENDER_USER_APIKEY', 'TESTAPIKEY'))
 parser.add_argument('-b', '--baseurl', default=os.getenv('FILESENDER_BASEURL', 'localhost'))
 parser.add_argument('-d', '--days', type=int, default=os.getenv('FILESENDER_EXPIRE_DAYS', 10))
-parser.add_argument('-s', '--subject', default=os.getenv('FILESENDER_SUBJECT', "NFA Data Transfer"))
+parser.add_argument('-s', '--subject', default=os.getenv('FILESENDER_SUBJECT', ""))
 parser.add_argument('-m', '--message', default=os.getenv('FILESENDER_MESSAGE', ""))
 args = parser.parse_args()
 
