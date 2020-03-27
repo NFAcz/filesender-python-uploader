@@ -71,6 +71,8 @@ if args.verbose:
   print('apikey            : '+args.apikey)
   print('upload_chunk_size : '+str(upload_chunk_size)+' bytes')
   print('recipients        : '+args.recipients)
+  print('subject           : '+args.subject)
+  print('message           : '+args.message)
   print('files             : '+','.join(args.files))
 
 ##########################################################################
