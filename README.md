@@ -8,6 +8,7 @@ It is a fork of an example [script](https://github.com/filesender/filesender/blo
 - username and sender e-mail as separate variables (needed for SAML environments)
 - added ability to specify expiration
 - progress option shows percentual representation
+- prints download URL at the end of successful transfer
 
 ## Usage
 
@@ -62,8 +63,8 @@ Uploading /home/sender/testfile.zip part 0/3
 Uploading /home/sender/testfile.zip part 1/3
 /home/sender/testfile.zip, 33%
 fileComplete: /home/sender/testfile.zip
-transferComplete
-Upload Complete
+transferComplete: https://filesender.example.com/?s=download&token=e3a11b38-1a15-4215-a31b-f0b5f50859fc
+Upload Complete: https://filesender.example.com/?s=download&token=e3a11b38-1a15-4215-a31b-f0b5f50859fc
 ```
 
 Parameters specified using environment variables:
