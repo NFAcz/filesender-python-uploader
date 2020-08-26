@@ -305,11 +305,12 @@ try:
 
 
   #transferComplete
+  r = transferComplete(transfer)
+  download_url = r['recipients'][0]['download_url']
   if args.verbose:
-    print('transferComplete')
-  transferComplete(transfer)
+    print('transferComplete: '+download_url)
   if args.progress:
-    print('Upload Complete')
+    print('Upload Complete: '+download_url)
 
 except Exception as inst:
   print(type(inst))
