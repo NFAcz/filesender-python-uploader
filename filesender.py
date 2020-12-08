@@ -57,6 +57,7 @@ parser.add_argument('-b', '--baseurl', default=os.getenv('FILESENDER_BASEURL', '
 parser.add_argument('-d', '--days', type=int, default=os.getenv('FILESENDER_EXPIRE_DAYS', 10))
 parser.add_argument('-s', '--subject', default=os.getenv('FILESENDER_SUBJECT', ""))
 parser.add_argument('-m', '--message', default=os.getenv('FILESENDER_MESSAGE', ""))
+parser.add_argument('-t', '--threads', type=int, default=os.getenv('FILESENDER_THREADS', 30))
 args = parser.parse_args()
 
   
@@ -73,6 +74,7 @@ if args.verbose:
   print('recipients        : '+args.recipients)
   print('subject           : '+args.subject)
   print('message           : '+args.message)
+  print('threads           : '+args.threads)
   print('files             : '+','.join(args.files))
 
 ##########################################################################
@@ -275,7 +277,7 @@ try:
     #putChunks
     q = queue.Queue()
     threads = []
-    num_worker_threads = 30
+    num_worker_threads = args.threads
     global percent_done
     percent_done = 0
     for i in range(num_worker_threads):
